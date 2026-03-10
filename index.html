@@ -1,966 +1,1645 @@
-<script>
-(() => {
-  "use strict";
-
-  const CONFIG = {
-    periodSeconds: 13 * 60,
-    breakSeconds: 2 * 60,
-    overtimeSeconds: 3 * 60,
-    totalPeriods: 4,
-    tickMs: 200,
-    firstLeadSeconds: 30,
-    resumeLeadSeconds: 20
-  };
-
-  const TEXT = {
-    fr: {
-      subtitle: "Championship Edition · voix + sons · Safari / GitHub Pages",
-      ready: "Prêt à commencer",
-      readyDetail: "Touchez Test son, puis Démarrer.",
-      waiting: "En attente",
-      notStarted: "Match non commencé",
-      modeStandard: "Mode: Standard",
-      modeIpad: "Mode: iPad",
-      audioUntested: "Audio: non testé",
-      audioOk: "Audio: OK",
-      audioFail: "Audio: bloqué ou muet",
-      periods: "Périodes",
-      state: "État",
-      infos: "Informations",
-      legend1: "Période en cours",
-      legend2: "Période terminée",
-      legend3: "Période en attente",
-      info1: "Voix intégrée",
-      info2: "30 sec avant le 1er départ",
-      info3: "20 sec avant chaque reprise",
-      info4: "Reset avec confirmation",
-      footer: "Sur iPad, ouvre cette page via Safari / l’icône d’écran d’accueil pour une meilleure fiabilité de la voix.",
-      pending: "En attente",
-      active: "En cours",
-      done: "Terminée",
-      start: "Démarrer",
-      pause: "Pause",
-      resume: "Reprendre",
-      overtime: "Prolongation",
-      fullscreen: "Plein écran",
-      reset: "Réinitialiser",
-      test: "Test son",
-      introStatus: "Présentation du duel",
-      introDetail: "Annonce officielle en cours.",
-      introPhase: "Présentation",
-      introSub: "Préparation du duel",
-      overlayOfficial: "Annonce officielle",
-      overlayWelcomeTitle: "Bienvenue à Duel 60",
-      overlayWelcomeSub: "Le duel commence bientôt.",
-      overlayBreakTitle: "Repos de 2 minutes",
-      overlayBreakSub: "Préparez-vous pour la reprise.",
-      overlayFinalTitle: "Duel terminé",
-      overlayFinalSub: "Comptez vos points.",
-      periodTitle: n => `Période ${n}`,
-      periodSub: n => `Temps réglementaire · période ${n} sur 4`,
-      periodStatus: n => `Période ${n} en cours`,
-      periodDetail: "Chronomètre officiel actif.",
-      breakTitle: "Pause",
-      breakSub: n => `Entre la période ${n} et la période ${n + 1}`,
-      breakStatus: "Repos de 2 minutes",
-      breakDetail: n => `La période ${n + 1} commencera automatiquement après le repos.`,
-      finishTitle: "Duel terminé",
-      finishSub: "Temps réglementaire écoulé",
-      finishStatus: "Fin du duel",
-      finishDetail: "Si égalité, lancez la prolongation.",
-      overtimeTitle: "Temps supplémentaire",
-      overtimeSub: "Durée 3 minutes",
-      overtimeStatus: "Temps supplémentaire en cours",
-      overtimeDetail: "Chronomètre de prolongation actif.",
-      overtimeDoneTitle: "Temps supplémentaire terminé",
-      overtimeDoneSub: "Temps écoulé",
-      pausedStatus: "Chronomètre en pause",
-      pausedDetail: "Touchez Reprendre pour continuer.",
-      pausedSub: "Pause manuelle",
-      resetConfirm: "Voulez-vous vraiment réinitialiser le duel ?",
-      testing: "Test audio",
-      startSpeech30: "Prenez place, le duel débute dans 30 secondes.",
-      resumeSpeech20: "Le duel débute dans 20 secondes.",
-      endPeriodSpeech: "Fin de période, repos de 2 minutes.",
-      finalSpeech: "Temps écoulé, duel terminé. Comptez vos points. Si égalité, préparez-vous pour un 3 minutes de temps supplémentaire.",
-      overtimeStartSpeech: "Temps supplémentaire de 3 minutes.",
-      overtimeEndSpeech: "Temps supplémentaire terminé."
-    },
-    en: {
-      subtitle: "Championship Edition · voice + sound · Safari / GitHub Pages",
-      ready: "Ready to start",
-      readyDetail: "Tap Test sound, then Start.",
-      waiting: "Waiting",
-      notStarted: "Match not started",
-      modeStandard: "Mode: Standard",
-      modeIpad: "Mode: iPad",
-      audioUntested: "Audio: not tested",
-      audioOk: "Audio: OK",
-      audioFail: "Audio: blocked or muted",
-      periods: "Periods",
-      state: "Status",
-      infos: "Information",
-      legend1: "Active period",
-      legend2: "Completed period",
-      legend3: "Pending period",
-      info1: "Built-in voice",
-      info2: "30 sec before first start",
-      info3: "20 sec before each restart",
-      info4: "Reset confirmation",
-      footer: "On iPad, open this page via Safari / the home screen icon for better voice reliability.",
-      pending: "Pending",
-      active: "Active",
-      done: "Done",
-      start: "Start",
-      pause: "Pause",
-      resume: "Resume",
-      overtime: "Overtime",
-      fullscreen: "Fullscreen",
-      reset: "Reset",
-      test: "Test sound",
-      introStatus: "Duel introduction",
-      introDetail: "Official announcement in progress.",
-      introPhase: "Introduction",
-      introSub: "Duel preparation",
-      overlayOfficial: "Official announcement",
-      overlayWelcomeTitle: "Welcome to Duel 60",
-      overlayWelcomeSub: "The duel begins shortly.",
-      overlayBreakTitle: "2-minute rest",
-      overlayBreakSub: "Get ready for the restart.",
-      overlayFinalTitle: "Duel complete",
-      overlayFinalSub: "Count your points.",
-      periodTitle: n => `Period ${n}`,
-      periodSub: n => `Regulation time · period ${n} of 4`,
-      periodStatus: n => `Period ${n} in progress`,
-      periodDetail: "Official clock is running.",
-      breakTitle: "Break",
-      breakSub: n => `Between period ${n} and period ${n + 1}`,
-      breakStatus: "2-minute rest",
-      breakDetail: n => `Period ${n + 1} will begin automatically after the rest.`,
-      finishTitle: "Duel complete",
-      finishSub: "Regulation time elapsed",
-      finishStatus: "End of duel",
-      finishDetail: "If tied, start overtime.",
-      overtimeTitle: "Overtime",
-      overtimeSub: "Duration 3 minutes",
-      overtimeStatus: "Overtime in progress",
-      overtimeDetail: "Overtime clock is running.",
-      overtimeDoneTitle: "Overtime complete",
-      overtimeDoneSub: "Time elapsed",
-      pausedStatus: "Clock paused",
-      pausedDetail: "Tap Resume to continue.",
-      pausedSub: "Manual pause",
-      resetConfirm: "Do you really want to reset the duel?",
-      testing: "Audio test",
-      startSpeech30: "Take your places, the duel begins in 30 seconds.",
-      resumeSpeech20: "The duel begins in 20 seconds.",
-      endPeriodSpeech: "End of period, 2 minutes rest.",
-      finalSpeech: "Time elapsed, duel complete. Count your points. If tied, prepare for 3 minutes of overtime.",
-      overtimeStartSpeech: "3 minutes of overtime.",
-      overtimeEndSpeech: "Overtime complete."
-    }
-  };
-
-  const els = {
-    app: document.getElementById("app"),
-    subtitleText: document.getElementById("subtitleText"),
-    audioBadge: document.getElementById("audioBadge"),
-    statusLabel: document.getElementById("statusLabel"),
-    statusDetail: document.getElementById("statusDetail"),
-    modeBadge: document.getElementById("modeBadge"),
-    signalDot: document.getElementById("signalDot"),
-    phaseLabel: document.getElementById("phaseLabel"),
-    timerDisplay: document.getElementById("timerDisplay"),
-    subDisplay: document.getElementById("subDisplay"),
-    timerCard: document.getElementById("timerCard"),
-    overlay: document.getElementById("overlay"),
-    overlayKicker: document.getElementById("overlayKicker"),
-    overlayTitle: document.getElementById("overlayTitle"),
-    overlaySub: document.getElementById("overlaySub"),
-
-    periodsTitle: document.getElementById("periodsTitle"),
-    legendTitle: document.getElementById("legendTitle"),
-    infoTitle: document.getElementById("infoTitle"),
-    legend1: document.getElementById("legend1"),
-    legend2: document.getElementById("legend2"),
-    legend3: document.getElementById("legend3"),
-    info1: document.getElementById("info1"),
-    info2: document.getElementById("info2"),
-    info3: document.getElementById("info3"),
-    info4: document.getElementById("info4"),
-    footerText: document.getElementById("footerText"),
-
-    frBtn: document.getElementById("frBtn"),
-    enBtn: document.getElementById("enBtn"),
-    ipadBtn: document.getElementById("ipadBtn"),
-
-    testBtn: document.getElementById("testBtn"),
-    startBtn: document.getElementById("startBtn"),
-    pauseBtn: document.getElementById("pauseBtn"),
-    resumeBtn: document.getElementById("resumeBtn"),
-    otBtn: document.getElementById("otBtn"),
-    fsBtn: document.getElementById("fsBtn"),
-    resetBtn: document.getElementById("resetBtn"),
-
-    p1: document.getElementById("p1"),
-    p2: document.getElementById("p2"),
-    p3: document.getElementById("p3"),
-    p4: document.getElementById("p4"),
-    p1t: document.getElementById("p1t"),
-    p2t: document.getElementById("p2t"),
-    p3t: document.getElementById("p3t"),
-    p4t: document.getElementById("p4t")
-  };
-
-  const state = {
-    lang: "fr",
-    mode: "idle",
-    activePeriod: 0,
-    remaining: CONFIG.periodSeconds,
-    running: false,
-    pausedFromMode: null,
-    timerEndAt: 0,
-    intervalId: null,
-    audioCtx: null,
-    ipadMode: false,
-    overlayTimeout: null,
-    speechEnabled: true,
-    selectedVoice: null,
-    spokenMarks: new Set()
-  };
-
-  function t(key, ...args) {
-    const value = TEXT[state.lang][key];
-    return typeof value === "function" ? value(...args) : value;
-  }
-
-  function setStatus(label, detail, live = false) {
-    els.statusLabel.textContent = label;
-    els.statusDetail.textContent = detail;
-    els.signalDot.style.background = live ? "var(--gold)" : "#64748b";
-    els.signalDot.style.boxShadow = live
-      ? "0 0 0 10px rgba(212,175,55,.12), 0 0 28px rgba(212,175,55,.24)"
-      : "none";
-  }
-
-  function setPhase(text) {
-    els.phaseLabel.textContent = text;
-  }
-
-  function setSub(text) {
-    els.subDisplay.textContent = text;
-  }
-
-  function formatTime(totalSeconds) {
-    const s = Math.max(0, Math.ceil(totalSeconds));
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
-  }
-
-  function renderTime(seconds) {
-    els.timerDisplay.textContent = formatTime(seconds);
-  }
-
-  function flashTimer() {
-    els.timerCard.classList.remove("flash");
-    void els.timerCard.offsetWidth;
-    els.timerCard.classList.add("flash");
-  }
-
-  function wait(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  function stopInterval() {
-    if (state.intervalId) {
-      clearInterval(state.intervalId);
-      state.intervalId = null;
-    }
-  }
-
-  function clearOverlayTimeout() {
-    if (state.overlayTimeout) {
-      clearTimeout(state.overlayTimeout);
-      state.overlayTimeout = null;
-    }
-  }
-
-  function showOverlay(title, sub, duration = 1200, style = "normal") {
-    clearOverlayTimeout();
-    els.overlayKicker.textContent = t("overlayOfficial");
-    els.overlayTitle.textContent = title;
-    els.overlaySub.textContent = sub;
-    els.overlay.classList.remove("pause-style", "final-style");
-    if (style === "pause") els.overlay.classList.add("pause-style");
-    if (style === "final") els.overlay.classList.add("final-style");
-    els.overlay.classList.add("show");
-
-    return new Promise(resolve => {
-      state.overlayTimeout = setTimeout(() => {
-        els.overlay.classList.remove("show", "pause-style", "final-style");
-        state.overlayTimeout = null;
-        resolve();
-      }, duration);
-    });
-  }
-
-  function updateButtons() {
-    const active = ["intro", "countdown", "period", "break", "overtime"].includes(state.mode);
-    const paused = state.mode === "paused";
-    const finished = state.mode === "finished";
-
-    els.startBtn.disabled = active || paused;
-    els.pauseBtn.disabled = !(active && state.running);
-    els.resumeBtn.disabled = !paused;
-    els.otBtn.disabled = !(finished || state.mode === "idle");
-  }
-
-  function setMode(mode) {
-    state.mode = mode;
-    updateButtons();
-  }
-
-  function updatePeriodBoxes() {
-    const boxes = [
-      [els.p1, els.p1t, 1],
-      [els.p2, els.p2t, 2],
-      [els.p3, els.p3t, 3],
-      [els.p4, els.p4t, 4]
-    ];
-
-    for (const [box, label, n] of boxes) {
-      box.classList.remove("pending", "active", "done");
-
-      if (state.mode === "period" && state.activePeriod === n) {
-        box.classList.add("active");
-        label.textContent = t("active");
-      } else if (state.activePeriod > n || state.mode === "overtime" || state.mode === "finished") {
-        box.classList.add("done");
-        label.textContent = t("done");
-      } else {
-        box.classList.add("pending");
-        label.textContent = t("pending");
-      }
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Duel 60 – Championship Voice Edition</title>
+  <meta name="theme-color" content="#0f2747" />
+  <style>
+    :root{
+      --bg1:#050c17;
+      --bg2:#0c1628;
+      --bg3:#152742;
+      --navy:#0f2747;
+      --navy2:#173a66;
+      --gold:#d4af37;
+      --gold2:#f3dd8a;
+      --gold3:#9a6a11;
+      --blue:#4db8ff;
+      --blue2:#a7ddff;
+      --green:#2ecc71;
+      --red:#e74c3c;
+      --yellow:#f59e0b;
+      --text:#f8fafc;
+      --muted:#bfd0e4;
+      --panel:rgba(255,255,255,.06);
+      --panel2:rgba(255,255,255,.10);
+      --border:rgba(212,175,55,.18);
+      --shadow:0 24px 70px rgba(0,0,0,.45);
     }
 
-    if (state.mode === "idle") {
-      boxes.forEach(([box, label]) => {
-        box.classList.remove("active", "done");
-        box.classList.add("pending");
-        label.textContent = t("pending");
-      });
+    *{
+      box-sizing:border-box;
+      -webkit-tap-highlight-color:transparent;
     }
 
-    if (state.mode === "break" || state.mode === "countdown") {
-      const next = state.mode === "break" ? state.activePeriod + 1 : state.activePeriod;
-      boxes.forEach(([box, label, n]) => {
-        if (n < next) {
-          box.classList.remove("pending", "active");
-          box.classList.add("done");
-          label.textContent = t("done");
-        } else if (n === next && state.mode !== "idle") {
-          box.classList.remove("pending", "done");
-          box.classList.add("active");
-          label.textContent = t("pending");
-        }
-      });
-    }
-  }
-
-  function applyLanguageUI() {
-    els.subtitleText.textContent = t("subtitle");
-    els.periodsTitle.textContent = t("periods");
-    els.legendTitle.textContent = t("state");
-    els.infoTitle.textContent = t("infos");
-    els.legend1.textContent = t("legend1");
-    els.legend2.textContent = t("legend2");
-    els.legend3.textContent = t("legend3");
-    els.info1.textContent = t("info1");
-    els.info2.textContent = t("info2");
-    els.info3.textContent = t("info3");
-    els.info4.textContent = t("info4");
-    els.footerText.textContent = t("footer");
-
-    els.testBtn.textContent = t("test");
-    els.startBtn.textContent = t("start");
-    els.pauseBtn.textContent = t("pause");
-    els.resumeBtn.textContent = t("resume");
-    els.otBtn.textContent = t("overtime");
-    els.fsBtn.textContent = t("fullscreen");
-    els.resetBtn.textContent = t("reset");
-
-    els.modeBadge.textContent = state.ipadMode ? t("modeIpad") : t("modeStandard");
-
-    els.frBtn.classList.toggle("active", state.lang === "fr");
-    els.enBtn.classList.toggle("active", state.lang === "en");
-
-    initVoices();
-
-    if (state.mode === "idle") {
-      setPhase(t("waiting"));
-      setSub(t("notStarted"));
-      setStatus(t("ready"), t("readyDetail"), false);
+    html,body{
+      margin:0;
+      padding:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top, rgba(212,175,55,.16), transparent 20%),
+        radial-gradient(circle at 85% 15%, rgba(77,184,255,.16), transparent 18%),
+        linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 42%, var(--bg1) 100%);
     }
 
-    updatePeriodBoxes();
-  }
-
-  function resetDisplay() {
-    state.activePeriod = 0;
-    state.remaining = CONFIG.periodSeconds;
-    state.spokenMarks = new Set();
-    setMode("idle");
-    renderTime(CONFIG.periodSeconds);
-    setPhase(t("waiting"));
-    setSub(t("notStarted"));
-    setStatus(t("ready"), t("readyDetail"), false);
-    els.audioBadge.textContent = t("audioUntested");
-    updatePeriodBoxes();
-  }
-
-  function fullReset(force = false) {
-    if (!force) {
-      const ok = confirm(t("resetConfirm"));
-      if (!ok) return;
+    body{
+      padding:16px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
     }
-    stopInterval();
-    stopSpeech();
-    clearOverlayTimeout();
-    els.overlay.classList.remove("show", "pause-style", "final-style");
-    state.running = false;
-    state.pausedFromMode = null;
-    resetDisplay();
-  }
 
-  function initAudio() {
-    if (state.audioCtx) return true;
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return false;
-    try {
-      state.audioCtx = new AC();
-      return true;
-    } catch (e) {
-      return false;
+    .app{
+      width:min(1380px,100%);
+      height:min(97vh,1020px);
+      display:grid;
+      grid-template-rows:auto auto 1fr auto auto;
+      gap:14px;
+      padding:18px;
+      border-radius:30px;
+      background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      border:1px solid var(--border);
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
     }
-  }
 
-  function initVoices() {
-    if (!("speechSynthesis" in window)) return;
-    const voices = speechSynthesis.getVoices ? speechSynthesis.getVoices() : [];
-    if (!voices.length) return;
-
-    const preferred = state.lang === "fr"
-      ? voices.find(v => /fr/i.test(v.lang) && /Thomas|Amelie|Audrey|Marie|Pauline|Siri/i.test(v.name))
-        || voices.find(v => /fr/i.test(v.lang))
-        || voices[0]
-      : voices.find(v => /en/i.test(v.lang) && /Samantha|Daniel|Karen|Alex|Siri/i.test(v.name))
-        || voices.find(v => /en/i.test(v.lang))
-        || voices[0];
-
-    state.selectedVoice = preferred || null;
-  }
-
-  function stopSpeech() {
-    try {
-      if ("speechSynthesis" in window) speechSynthesis.cancel();
-    } catch (e) {}
-  }
-
-  function speak(text, priority = false, rate = 1.02, pitch = 1) {
-    return new Promise(resolve => {
-      if (!state.speechEnabled || !("speechSynthesis" in window) || !text) {
-        resolve(false);
-        return;
-      }
-
-      try {
-        const utter = new SpeechSynthesisUtterance(text);
-        utter.voice = state.selectedVoice || null;
-        utter.lang = state.selectedVoice?.lang || (state.lang === "fr" ? "fr-FR" : "en-US");
-        utter.rate = rate;
-        utter.pitch = pitch;
-        utter.volume = 1;
-
-        utter.onend = () => resolve(true);
-        utter.onerror = () => resolve(false);
-
-        if (priority) speechSynthesis.cancel();
-        speechSynthesis.speak(utter);
-      } catch (e) {
-        resolve(false);
-      }
-    });
-  }
-
-  async function unlockAudioAndVoice() {
-    const ok = initAudio();
-    initVoices();
-
-    try {
-      if (ok && state.audioCtx.state === "suspended") {
-        await state.audioCtx.resume();
-      }
-      if ("speechSynthesis" in window) {
-        speechSynthesis.cancel();
-      }
-      els.audioBadge.textContent = ok ? t("audioOk") : t("audioFail");
-      return ok;
-    } catch (e) {
-      els.audioBadge.textContent = t("audioFail");
-      return false;
+    .app::before{
+      content:"";
+      position:absolute;
+      inset:-10% auto auto -10%;
+      width:48%;
+      height:48%;
+      background:radial-gradient(circle, rgba(212,175,55,.12), transparent 68%);
+      pointer-events:none;
     }
-  }
 
-  function playTone(freq = 880, duration = 0.18, gainValue = 0.35, type = "sine") {
-    return new Promise(resolve => {
-      if (!state.audioCtx) {
-        resolve(false);
-        return;
-      }
-
-      try {
-        const ctx = state.audioCtx;
-        const now = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        const filter = ctx.createBiquadFilter();
-
-        filter.type = "lowpass";
-        filter.frequency.setValueAtTime(3200, now);
-
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, now);
-
-        gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.exponentialRampToValueAtTime(gainValue, now + 0.01);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start(now);
-        osc.stop(now + duration);
-
-        setTimeout(() => resolve(true), duration * 1000 + 30);
-      } catch (e) {
-        resolve(false);
-      }
-    });
-  }
-
-  async function playStartBuzzer() {
-    const a = await playTone(1050, 0.12, 0.42, "square");
-    await wait(35);
-    const b = await playTone(1300, 0.14, 0.46, "square");
-    await wait(35);
-    const c = await playTone(920, 0.38, 0.54, "sawtooth");
-    return a || b || c;
-  }
-
-  async function playEndBuzzer() {
-    const a = await playTone(820, 0.14, 0.42, "square");
-    await wait(50);
-    const b = await playTone(700, 0.14, 0.42, "square");
-    await wait(50);
-    const c = await playTone(560, 0.30, 0.50, "square");
-    return a || b || c;
-  }
-
-  async function playFinalBuzzer() {
-    const a = await playTone(1350, 0.12, 0.40, "square");
-    await wait(45);
-    const b = await playTone(1350, 0.12, 0.40, "square");
-    await wait(60);
-    const c = await playTone(760, 0.48, 0.58, "sawtooth");
-    return a || b || c;
-  }
-
-  async function testSound() {
-    await unlockAudioAndVoice();
-    await showOverlay(t("testing"), "3 · 2 · 1", 700);
-    await playTone(900, 0.16, 0.35, "sine");
-    await wait(70);
-    await playTone(1100, 0.18, 0.40, "square");
-    await wait(70);
-    await speak(state.lang === "fr" ? "Test de la voix." : "Voice test.", true, 1.02);
-    const played = await playFinalBuzzer();
-    els.audioBadge.textContent = played ? t("audioOk") : t("audioFail");
-  }
-
-  function startTimer(seconds, mode, onComplete, onTick) {
-    stopInterval();
-    state.running = true;
-    state.remaining = seconds;
-    state.timerEndAt = performance.now() + seconds * 1000;
-    setMode(mode);
-
-    state.intervalId = setInterval(() => {
-      const remainingMs = state.timerEndAt - performance.now();
-      const remainingSec = Math.max(0, remainingMs / 1000);
-      state.remaining = remainingSec;
-
-      if (onTick) onTick(remainingSec);
-
-      if (remainingSec <= 0.02) {
-        stopInterval();
-        state.running = false;
-        onComplete();
-      }
-    }, CONFIG.tickMs);
-  }
-
-  async function runIntro() {
-    await unlockAudioAndVoice();
-
-    state.activePeriod = 0;
-    state.running = false;
-    state.spokenMarks = new Set();
-
-    setMode("intro");
-    setPhase(t("introPhase"));
-    setSub(t("introSub"));
-    setStatus(t("introStatus"), t("introDetail"), true);
-    updatePeriodBoxes();
-
-    await showOverlay(t("overlayWelcomeTitle"), t("overlayWelcomeSub"), 1800);
-    await startLeadCountdown(CONFIG.firstLeadSeconds, 1, true);
-  }
-
-  async function startLeadCountdown(totalSeconds, periodNumber, firstStart = false) {
-    state.activePeriod = periodNumber;
-    state.spokenMarks = new Set();
-
-    setMode("countdown");
-    setPhase(firstStart ? t("introPhase") : t("breakTitle"));
-    setSub(firstStart ? "00:30 avant le départ" : "00:20 avant la reprise");
-    setStatus(
-      firstStart ? t("introStatus") : t("breakStatus"),
-      firstStart ? t("introDetail") : t("breakDetail", periodNumber - 1),
-      true
-    );
-    updatePeriodBoxes();
-
-    const openingSpeech = firstStart ? t("startSpeech30") : t("resumeSpeech20");
-    const openingOverlayTitle = firstStart ? t("overlayWelcomeTitle") : t("overlayBreakTitle");
-    const openingOverlaySub = firstStart ? openingSpeech : openingSpeech;
-
-    await speak(openingSpeech, true, 1.0);
-    await showOverlay(openingOverlayTitle, openingOverlaySub, 1400, firstStart ? "normal" : "pause");
-
-    startTimer(
-      totalSeconds,
-      "countdown",
-      async () => {
-        const played = await playStartBuzzer();
-        els.audioBadge.textContent = played ? t("audioOk") : t("audioFail");
-        await speak(t("periodTitle", periodNumber), true, 1.05);
-        await showOverlay(t("periodTitle", periodNumber), t("periodSub", periodNumber), 900);
-        startPeriod(periodNumber);
-      },
-      (remainingSec) => {
-        const sec = Math.ceil(remainingSec);
-
-        if (sec > 10) {
-          renderTime(sec);
-          setSub(firstStart ? `${formatTime(sec)} avant le départ` : `${formatTime(sec)} avant la reprise`);
-        } else if (sec >= 1) {
-          els.timerDisplay.textContent = String(sec);
-          setSub(firstStart ? "Décompte officiel" : "Reprise imminente");
-          flashTimer();
-
-          if (!state.spokenMarks.has(`n${sec}`)) {
-            state.spokenMarks.add(`n${sec}`);
-            speak(String(sec), true, 1.06);
-            showOverlay(String(sec), firstStart ? "Avant le lancement" : "Reprise du jeu", 550, firstStart ? "normal" : "pause");
-          }
-        }
-      }
-    );
-  }
-
-  function startPeriod(periodNumber) {
-    state.activePeriod = periodNumber;
-    setPhase(t("periodTitle", periodNumber));
-    setSub(t("periodSub", periodNumber));
-    setStatus(t("periodStatus", periodNumber), t("periodDetail"), true);
-    updatePeriodBoxes();
-
-    startTimer(
-      CONFIG.periodSeconds,
-      "period",
-      async () => {
-        await onPeriodEnd(periodNumber);
-      },
-      (remainingSec) => {
-        renderTime(remainingSec);
-      }
-    );
-  }
-
-  async function onPeriodEnd(periodNumber) {
-    const played = await playEndBuzzer();
-    els.audioBadge.textContent = played ? t("audioOk") : t("audioFail");
-
-    await speak(t("endPeriodSpeech"), true, 1.0);
-    await showOverlay(
-      state.lang === "fr" ? `Fin période ${periodNumber}` : `End period ${periodNumber}`,
-      t("endPeriodSpeech"),
-      1500,
-      "pause"
-    );
-
-    if (periodNumber < CONFIG.totalPeriods) {
-      await startBreak(periodNumber);
-    } else {
-      await finishMatch();
+    .app::after{
+      content:"";
+      position:absolute;
+      inset:auto -10% -10% auto;
+      width:48%;
+      height:48%;
+      background:radial-gradient(circle, rgba(77,184,255,.11), transparent 68%);
+      pointer-events:none;
     }
-  }
 
-  async function startBreak(completedPeriod) {
-    state.activePeriod = completedPeriod;
-    state.spokenMarks = new Set();
+    .topbar{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:12px;
+      align-items:start;
+      position:relative;
+      z-index:2;
+    }
 
-    setPhase(t("breakTitle"));
-    setSub(t("breakSub", completedPeriod));
-    setStatus(t("breakStatus"), t("breakDetail", completedPeriod), true);
-    updatePeriodBoxes();
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:0;
+    }
 
-    startTimer(
-      CONFIG.breakSeconds,
-      "break",
-      async () => {
-        await startLeadCountdown(CONFIG.resumeLeadSeconds, completedPeriod + 1, false);
-      },
-      (remainingSec) => {
-        const sec = Math.ceil(remainingSec);
-        renderTime(remainingSec);
+    .crest-row{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      min-width:0;
+    }
 
-        if (sec > CONFIG.resumeLeadSeconds) {
-          setSub(`${formatTime(sec)} de repos restant`);
-        } else {
-          setSub(`${formatTime(sec)} avant la reprise`);
-        }
-      }
-    );
-  }
+    .crest{
+      width:70px;
+      height:70px;
+      border-radius:18px;
+      border:1px solid rgba(212,175,55,.28);
+      background:
+        radial-gradient(circle at 30% 25%, rgba(243,221,138,.35), transparent 28%),
+        linear-gradient(180deg, #183250 0%, #0e2138 100%);
+      box-shadow:
+        inset 0 0 20px rgba(255,255,255,.04),
+        0 10px 24px rgba(0,0,0,.28);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex:0 0 auto;
+    }
 
-  async function finishMatch() {
-    const played = await playFinalBuzzer();
-    els.audioBadge.textContent = played ? t("audioOk") : t("audioFail");
+    .crest-inner{
+      width:46px;
+      height:46px;
+      border-radius:12px;
+      border:2px solid rgba(212,175,55,.75);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:var(--gold2);
+      font-weight:900;
+      font-size:20px;
+      letter-spacing:.08em;
+      text-shadow:0 0 12px rgba(212,175,55,.22);
+    }
 
-    setMode("finished");
-    renderTime(0);
-    setPhase(t("finishTitle"));
-    setSub(t("finishSub"));
-    setStatus(t("finishStatus"), t("finishDetail"), false);
-    updatePeriodBoxes();
+    .title{
+      font-size:clamp(28px,3.8vw,48px);
+      font-weight:900;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      line-height:1;
+      color:var(--gold2);
+      text-shadow:0 0 20px rgba(212,175,55,.20);
+    }
 
-    await speak(t("finalSpeech"), true, 1.0);
-    await showOverlay(t("overlayFinalTitle"), t("finalSpeech"), 2600, "final");
-  }
+    .subtitle{
+      font-size:clamp(12px,1.5vw,16px);
+      color:var(--muted);
+    }
 
-  async function startOvertime() {
-    await unlockAudioAndVoice();
+    .top-actions{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      gap:10px;
+    }
 
-    state.activePeriod = 4;
-    setPhase(t("overtimeTitle"));
-    setSub(t("overtimeSub"));
-    setStatus(t("overtimeStatus"), t("overtimeDetail"), true);
-    updatePeriodBoxes();
+    .pill{
+      border:1px solid rgba(212,175,55,.20);
+      background:rgba(255,255,255,.06);
+      color:#eaf4ff;
+      padding:10px 14px;
+      border-radius:999px;
+      font-weight:800;
+      font-size:14px;
+      min-height:42px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+    }
 
-    await speak(t("overtimeStartSpeech"), true, 1.0);
-    await showOverlay(t("overtimeTitle"), t("overtimeStartSpeech"), 1500);
+    .chip-row{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
 
-    startTimer(
-      CONFIG.overtimeSeconds,
-      "overtime",
-      async () => {
-        const done = await playFinalBuzzer();
-        els.audioBadge.textContent = done ? t("audioOk") : t("audioFail");
-        setMode("finished");
-        setPhase(t("overtimeDoneTitle"));
-        setSub(t("overtimeDoneSub"));
-        setStatus(t("finishStatus"), t("finishDetail"), false);
-        await speak(t("overtimeEndSpeech"), true, 1.0);
-        await showOverlay(t("overtimeDoneTitle"), t("overtimeEndSpeech"), 1800, "final");
-      },
-      (remainingSec) => {
-        renderTime(remainingSec);
-      }
-    );
-  }
+    .chip-btn{
+      appearance:none;
+      border:1px solid rgba(212,175,55,.18);
+      background:rgba(255,255,255,.05);
+      color:#fff;
+      padding:10px 14px;
+      border-radius:999px;
+      font-weight:800;
+      cursor:pointer;
+      min-height:42px;
+      min-width:62px;
+      transition:.15s ease;
+    }
 
-  function pauseFlow() {
-    if (!state.running) return;
-    stopInterval();
-    stopSpeech();
-    state.running = false;
-    state.pausedFromMode = state.mode;
-    setMode("paused");
-    setStatus(t("pausedStatus"), t("pausedDetail"), false);
-    setSub(t("pausedSub"));
-  }
+    .chip-btn.active{
+      background:linear-gradient(180deg, #2563eb, #1d4ed8);
+      box-shadow:0 8px 20px rgba(37,99,235,.25);
+    }
 
-  function resumeFlow() {
-    if (state.mode !== "paused" || !state.pausedFromMode) return;
+    .chip-btn.mode.active{
+      background:linear-gradient(180deg, #9a6a11, #d4af37);
+      color:#111827;
+      box-shadow:0 8px 20px rgba(212,175,55,.28);
+    }
 
-    const modeToResume = state.pausedFromMode;
-    const remaining = state.remaining;
+    .status-row{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:14px;
+      align-items:center;
+      padding:16px 18px;
+      border-radius:24px;
+      border:1px solid rgba(212,175,55,.18);
+      background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
+      position:relative;
+      z-index:2;
+    }
 
-    if (modeToResume === "period") {
-      setPhase(t("periodTitle", state.activePeriod));
-      setSub(t("periodSub", state.activePeriod));
-      setStatus(t("periodStatus", state.activePeriod), t("periodDetail"), true);
-      updatePeriodBoxes();
+    .status-label{
+      font-size:clamp(22px,2.8vw,34px);
+      font-weight:900;
+      letter-spacing:.05em;
+      text-transform:uppercase;
+      margin-bottom:6px;
+      line-height:1.05;
+      color:var(--gold2);
+    }
 
-      startTimer(
-        remaining,
-        "period",
-        async () => {
-          await onPeriodEnd(state.activePeriod);
+    .status-detail{
+      font-size:clamp(13px,1.5vw,18px);
+      color:var(--muted);
+      line-height:1.3;
+    }
+
+    .signal-wrap{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .signal-dot{
+      width:16px;
+      height:16px;
+      border-radius:50%;
+      background:#64748b;
+    }
+
+    .layout{
+      display:grid;
+      grid-template-columns:1fr 330px;
+      gap:14px;
+      min-height:0;
+      position:relative;
+      z-index:2;
+    }
+
+    .timer-card{
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      border-radius:30px;
+      border:1px solid rgba(212,175,55,.18);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      padding:24px;
+      position:relative;
+      overflow:hidden;
+      box-shadow: inset 0 0 80px rgba(255,255,255,.02);
+    }
+
+    .timer-card::before{
+      content:"";
+      position:absolute;
+      inset:auto -15% -28% -15%;
+      height:48%;
+      background:radial-gradient(circle, rgba(77,184,255,.12), transparent 65%);
+      pointer-events:none;
+    }
+
+    .phase{
+      font-size:clamp(20px,2.2vw,30px);
+      font-weight:900;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+      color:var(--gold2);
+      text-align:center;
+      margin-bottom:12px;
+    }
+
+    .timer{
+      font-size:clamp(106px,18vw,270px);
+      font-weight:900;
+      line-height:.92;
+      letter-spacing:-.06em;
+      font-variant-numeric:tabular-nums;
+      text-align:center;
+      user-select:none;
+      text-shadow:0 0 28px rgba(255,255,255,.10);
+      color:white;
+    }
+
+    .sub{
+      margin-top:12px;
+      font-size:clamp(18px,2vw,28px);
+      color:var(--blue2);
+      font-weight:800;
+      text-align:center;
+      line-height:1.25;
+    }
+
+    .side{
+      display:grid;
+      grid-template-rows:auto auto 1fr;
+      gap:14px;
+      min-height:0;
+    }
+
+    .card{
+      border:1px solid rgba(212,175,55,.16);
+      border-radius:24px;
+      background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
+      padding:16px;
+    }
+
+    .card-title{
+      font-size:13px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color:var(--gold2);
+      font-weight:900;
+      margin-bottom:10px;
+    }
+
+    .period-grid{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:10px;
+    }
+
+    .period-box{
+      border:1px solid rgba(212,175,55,.14);
+      border-radius:18px;
+      padding:14px 10px;
+      text-align:center;
+      background:rgba(255,255,255,.03);
+    }
+
+    .period-box .n{
+      font-size:26px;
+      font-weight:900;
+      margin-bottom:6px;
+    }
+
+    .period-box .t{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+
+    .period-box.pending{ opacity:.82; }
+    .period-box.active{
+      background:linear-gradient(180deg, rgba(212,175,55,.24), rgba(212,175,55,.08));
+      border-color:rgba(212,175,55,.36);
+      box-shadow:0 8px 24px rgba(212,175,55,.12);
+    }
+    .period-box.done{
+      background:linear-gradient(180deg, rgba(77,184,255,.18), rgba(77,184,255,.06));
+      border-color:rgba(77,184,255,.28);
+    }
+
+    .legend{
+      display:grid;
+      gap:10px;
+      font-size:14px;
+    }
+
+    .legend-row{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:#e2e8f0;
+      font-weight:700;
+    }
+
+    .legend-dot{
+      width:14px;
+      height:14px;
+      border-radius:50%;
+      display:inline-block;
+    }
+
+    .controls{
+      display:grid;
+      grid-template-columns:repeat(7,1fr);
+      gap:12px;
+      position:relative;
+      z-index:2;
+    }
+
+    button.main{
+      appearance:none;
+      border:none;
+      border-radius:20px;
+      min-height:68px;
+      padding:16px 14px;
+      font-size:clamp(15px,1.7vw,21px);
+      font-weight:900;
+      color:white;
+      cursor:pointer;
+      box-shadow:0 10px 24px rgba(0,0,0,.30);
+      transition:transform .08s ease, opacity .2s ease;
+    }
+
+    button.main:active{
+      transform:scale(.985);
+    }
+
+    button.main:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+    }
+
+    .test{ background:linear-gradient(180deg, #14b8a6, #0f766e); }
+    .start{ background:linear-gradient(180deg, #d4af37, #9a6a11); color:#111827; }
+    .pause{ background:linear-gradient(180deg, #f59e0b, #b45309); }
+    .resume{ background:linear-gradient(180deg, #0ea5e9, #0369a1); }
+    .ot{ background:linear-gradient(180deg, #8b5cf6, #6d28d9); }
+    .fs{ background:linear-gradient(180deg, #475569, #1e293b); }
+    .reset{ background:linear-gradient(180deg, #ef4444, #b91c1c); }
+
+    .foot{
+      text-align:center;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
+      padding-bottom:max(4px, env(safe-area-inset-bottom));
+      position:relative;
+      z-index:2;
+    }
+
+    .overlay{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(2,6,23,.84);
+      backdrop-filter:blur(10px);
+      z-index:30;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .2s ease;
+      padding:24px;
+    }
+
+    .overlay.show{
+      opacity:1;
+      pointer-events:auto;
+    }
+
+    .overlay.pause-style{
+      background:
+        radial-gradient(circle at top, rgba(212,175,55,.14), transparent 22%),
+        radial-gradient(circle at 85% 15%, rgba(77,184,255,.14), transparent 20%),
+        rgba(2,6,23,.90);
+    }
+
+    .overlay.final-style{
+      background:
+        radial-gradient(circle at top, rgba(212,175,55,.18), transparent 22%),
+        radial-gradient(circle at bottom, rgba(77,184,255,.18), transparent 20%),
+        rgba(2,6,23,.93);
+    }
+
+    .overlay-box{
+      width:min(980px, 100%);
+      border:1px solid rgba(212,175,55,.26);
+      border-radius:30px;
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      box-shadow:0 20px 60px rgba(0,0,0,.35);
+      padding:28px;
+      text-align:center;
+    }
+
+    .overlay-kicker{
+      font-size:clamp(16px,2vw,24px);
+      font-weight:900;
+      letter-spacing:.20em;
+      text-transform:uppercase;
+      color:var(--gold2);
+      margin-bottom:14px;
+    }
+
+    .overlay-title{
+      font-size:clamp(42px,6.3vw,84px);
+      font-weight:900;
+      line-height:1.02;
+      margin-bottom:14px;
+      text-transform:uppercase;
+      color:white;
+      text-shadow:0 0 25px rgba(255,255,255,.08);
+    }
+
+    .overlay-sub{
+      font-size:clamp(18px,2.2vw,30px);
+      color:#dbeafe;
+      font-weight:800;
+      line-height:1.25;
+    }
+
+    .flash{
+      animation:flashPulse .7s ease;
+    }
+
+    @keyframes flashPulse{
+      0%{ transform:scale(1); }
+      35%{ transform:scale(1.04); }
+      100%{ transform:scale(1); }
+    }
+
+    .ipad-mode .layout{
+      grid-template-columns:1fr;
+    }
+
+    .ipad-mode .side{
+      display:none;
+    }
+
+    .ipad-mode .timer{
+      font-size:clamp(145px,24vw,350px);
+    }
+
+    .ipad-mode .phase{
+      font-size:clamp(24px,2.8vw,36px);
+    }
+
+    .ipad-mode .sub{
+      font-size:clamp(22px,2.3vw,32px);
+    }
+
+    .ipad-mode .controls{
+      grid-template-columns:repeat(4,1fr);
+    }
+
+    @media (max-width: 980px){
+      .layout{ grid-template-columns:1fr; }
+      .side{ grid-template-columns:1fr 1fr; grid-template-rows:auto; }
+    }
+
+    @media (max-width: 820px){
+      body{ padding:10px; }
+      .app{ height:98vh; padding:12px; border-radius:24px; }
+      .topbar{ grid-template-columns:1fr; }
+      .top-actions{ justify-content:flex-start; }
+      .status-row{ grid-template-columns:1fr; }
+      .signal-wrap{ justify-content:flex-start; }
+      .controls{ grid-template-columns:repeat(2,1fr); }
+      .side{ grid-template-columns:1fr; }
+    }
+
+    @media (max-width: 480px){
+      .timer{ font-size:clamp(88px,24vw,145px); }
+      .controls{ grid-template-columns:1fr 1fr; }
+      .crest{ width:58px; height:58px; border-radius:14px; }
+      .crest-inner{ width:38px; height:38px; font-size:16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <div class="topbar">
+      <div class="brand">
+        <div class="crest-row">
+          <div class="crest"><div class="crest-inner">D60</div></div>
+          <div>
+            <div class="title">Duel 60</div>
+            <div class="subtitle" id="subtitleText">Championship Voice Edition · Safari / GitHub Pages</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <div class="chip-row">
+          <button class="chip-btn active" id="frBtn">FR</button>
+          <button class="chip-btn" id="enBtn">EN</button>
+          <button class="chip-btn mode" id="ipadBtn">Mode iPad</button>
+        </div>
+        <div class="pill" id="audioBadge">Audio: non testé</div>
+      </div>
+    </div>
+
+    <div class="status-row">
+      <div>
+        <div class="status-label" id="statusLabel">Prêt à commencer</div>
+        <div class="status-detail" id="statusDetail">Touchez Test son, puis Démarrer.</div>
+      </div>
+
+      <div class="signal-wrap">
+        <div class="pill" id="modeBadge">Mode: Standard</div>
+        <div class="signal-dot" id="signalDot"></div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="timer-card" id="timerCard">
+        <div class="phase" id="phaseLabel">En attente</div>
+        <div class="timer" id="timerDisplay">13:00</div>
+        <div class="sub" id="subDisplay">Match non commencé</div>
+      </div>
+
+      <div class="side">
+        <div class="card">
+          <div class="card-title" id="periodsTitle">Périodes</div>
+          <div class="period-grid">
+            <div class="period-box pending" id="p1"><div class="n">1</div><div class="t" id="p1t">En attente</div></div>
+            <div class="period-box pending" id="p2"><div class="n">2</div><div class="t" id="p2t">En attente</div></div>
+            <div class="period-box pending" id="p3"><div class="n">3</div><div class="t" id="p3t">En attente</div></div>
+            <div class="period-box pending" id="p4"><div class="n">4</div><div class="t" id="p4t">En attente</div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" id="legendTitle">État</div>
+          <div class="legend">
+            <div class="legend-row"><span class="legend-dot" style="background:#d4af37;"></span><span id="legend1">Période en cours</span></div>
+            <div class="legend-row"><span class="legend-dot" style="background:#4db8ff;"></span><span id="legend2">Période terminée</span></div>
+            <div class="legend-row"><span class="legend-dot" style="background:#64748b;"></span><span id="legend3">Période en attente</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" id="infoTitle">Informations</div>
+          <div class="legend">
+            <div class="legend-row"><span>•</span><span id="info1">Voix intégrée</span></div>
+            <div class="legend-row"><span>•</span><span id="info2">30 sec avant le 1er départ</span></div>
+            <div class="legend-row"><span>•</span><span id="info3">20 sec avant chaque reprise</span></div>
+            <div class="legend-row"><span>•</span><span id="info4">Reset avec confirmation</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="main test" id="testBtn">Test son</button>
+      <button class="main start" id="startBtn">Démarrer</button>
+      <button class="main pause" id="pauseBtn" disabled>Pause</button>
+      <button class="main resume" id="resumeBtn" disabled>Reprendre</button>
+      <button class="main ot" id="otBtn" disabled>Prolongation</button>
+      <button class="main fs" id="fsBtn">Plein écran</button>
+      <button class="main reset" id="resetBtn">Réinitialiser</button>
+    </div>
+
+    <div class="foot" id="footerText">
+      Ouvre cette page via Safari ou depuis l’icône d’écran d’accueil pour une meilleure fiabilité de la voix.
+    </div>
+
+    <div class="overlay" id="overlay">
+      <div class="overlay-box">
+        <div class="overlay-kicker" id="overlayKicker">Annonce officielle</div>
+        <div class="overlay-title" id="overlayTitle">Bienvenue à Duel 60</div>
+        <div class="overlay-sub" id="overlaySub">Le duel commence bientôt.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const CONFIG = {
+        periodSeconds: 13 * 60,
+        breakSeconds: 2 * 60,
+        overtimeSeconds: 3 * 60,
+        totalPeriods: 4,
+        tickMs: 200,
+        firstLeadSeconds: 30,
+        resumeLeadSeconds: 20
+      };
+
+      const TEXT = {
+        fr: {
+          subtitle: "Championship Voice Edition · Safari / GitHub Pages",
+          ready: "Prêt à commencer",
+          readyDetail: "Touchez Test son, puis Démarrer.",
+          waiting: "En attente",
+          notStarted: "Match non commencé",
+          modeStandard: "Mode: Standard",
+          modeIpad: "Mode: iPad",
+          audioUntested: "Audio: non testé",
+          audioOk: "Audio: OK",
+          audioFail: "Audio: bloqué ou muet",
+          periods: "Périodes",
+          state: "État",
+          infos: "Informations",
+          legend1: "Période en cours",
+          legend2: "Période terminée",
+          legend3: "Période en attente",
+          info1: "Voix intégrée",
+          info2: "30 sec avant le 1er départ",
+          info3: "20 sec avant chaque reprise",
+          info4: "Reset avec confirmation",
+          footer: "Ouvre cette page via Safari ou depuis l’icône d’écran d’accueil pour une meilleure fiabilité de la voix.",
+          pending: "En attente",
+          active: "En cours",
+          done: "Terminée",
+          start: "Démarrer",
+          pause: "Pause",
+          resume: "Reprendre",
+          overtime: "Prolongation",
+          fullscreen: "Plein écran",
+          reset: "Réinitialiser",
+          test: "Test son",
+          introStatus: "Présentation du duel",
+          introDetail: "Annonce officielle en cours.",
+          introPhase: "Présentation",
+          introSub: "Préparation du duel",
+          overlayOfficial: "Annonce officielle",
+          overlayWelcomeTitle: "Bienvenue à Duel 60",
+          overlayWelcomeSub: "Prenez place, le duel commence bientôt.",
+          overlayBreakTitle: "Repos de 2 minutes",
+          overlayBreakSub: "Préparez-vous pour la reprise.",
+          overlayFinalTitle: "Duel terminé",
+          overlayFinalSub: "Comptez vos points.",
+          periodTitle: n => `Période ${n}`,
+          periodSub: n => `Temps réglementaire · période ${n} sur 4`,
+          periodStatus: n => `Période ${n} en cours`,
+          periodDetail: "Chronomètre officiel actif.",
+          breakTitle: "Pause",
+          breakSub: n => `Entre la période ${n} et la période ${n + 1}`,
+          breakStatus: "Repos de 2 minutes",
+          breakDetail: n => `La période ${n + 1} commencera automatiquement après le repos.`,
+          finishTitle: "Duel terminé",
+          finishSub: "Temps réglementaire écoulé",
+          finishStatus: "Fin du duel",
+          finishDetail: "Si égalité, lancez la prolongation.",
+          overtimeTitle: "Temps supplémentaire",
+          overtimeSub: "Durée 3 minutes",
+          overtimeStatus: "Temps supplémentaire en cours",
+          overtimeDetail: "Chronomètre de prolongation actif.",
+          overtimeDoneTitle: "Temps supplémentaire terminé",
+          overtimeDoneSub: "Temps écoulé",
+          pausedStatus: "Chronomètre en pause",
+          pausedDetail: "Touchez Reprendre pour continuer.",
+          pausedSub: "Pause manuelle",
+          resetConfirm: "Voulez-vous vraiment réinitialiser le duel ?",
+          testing: "Test audio",
+          startSpeech30: "Prenez place, le duel débute dans 30 secondes.",
+          resumeSpeech20: "Le duel débute dans 20 secondes.",
+          endPeriodSpeech: "Fin de période, repos de 2 minutes.",
+          finalSpeech: "Temps écoulé, duel terminé. Comptez vos points. Si égalité, préparez-vous pour un 3 minutes de temps supplémentaire.",
+          overtimeStartSpeech: "Temps supplémentaire de 3 minutes.",
+          overtimeEndSpeech: "Temps supplémentaire terminé."
         },
-        (remainingSec) => {
-          renderTime(remainingSec);
+        en: {
+          subtitle: "Championship Voice Edition · Safari / GitHub Pages",
+          ready: "Ready to start",
+          readyDetail: "Tap Test sound, then Start.",
+          waiting: "Waiting",
+          notStarted: "Match not started",
+          modeStandard: "Mode: Standard",
+          modeIpad: "Mode: iPad",
+          audioUntested: "Audio: not tested",
+          audioOk: "Audio: OK",
+          audioFail: "Audio: blocked or muted",
+          periods: "Periods",
+          state: "Status",
+          infos: "Information",
+          legend1: "Active period",
+          legend2: "Completed period",
+          legend3: "Pending period",
+          info1: "Built-in voice",
+          info2: "30 sec before first start",
+          info3: "20 sec before each restart",
+          info4: "Reset confirmation",
+          footer: "Open this page via Safari or from the home screen icon for better voice reliability.",
+          pending: "Pending",
+          active: "Active",
+          done: "Done",
+          start: "Start",
+          pause: "Pause",
+          resume: "Resume",
+          overtime: "Overtime",
+          fullscreen: "Fullscreen",
+          reset: "Reset",
+          test: "Test sound",
+          introStatus: "Duel introduction",
+          introDetail: "Official announcement in progress.",
+          introPhase: "Introduction",
+          introSub: "Duel preparation",
+          overlayOfficial: "Official announcement",
+          overlayWelcomeTitle: "Welcome to Duel 60",
+          overlayWelcomeSub: "Take your places, the duel begins shortly.",
+          overlayBreakTitle: "2-minute rest",
+          overlayBreakSub: "Get ready for the restart.",
+          overlayFinalTitle: "Duel complete",
+          overlayFinalSub: "Count your points.",
+          periodTitle: n => `Period ${n}`,
+          periodSub: n => `Regulation time · period ${n} of 4`,
+          periodStatus: n => `Period ${n} in progress`,
+          periodDetail: "Official clock is running.",
+          breakTitle: "Break",
+          breakSub: n => `Between period ${n} and period ${n + 1}`,
+          breakStatus: "2-minute rest",
+          breakDetail: n => `Period ${n + 1} will begin automatically after the rest.`,
+          finishTitle: "Duel complete",
+          finishSub: "Regulation time elapsed",
+          finishStatus: "End of duel",
+          finishDetail: "If tied, start overtime.",
+          overtimeTitle: "Overtime",
+          overtimeSub: "Duration 3 minutes",
+          overtimeStatus: "Overtime in progress",
+          overtimeDetail: "Overtime clock is running.",
+          overtimeDoneTitle: "Overtime complete",
+          overtimeDoneSub: "Time elapsed",
+          pausedStatus: "Clock paused",
+          pausedDetail: "Tap Resume to continue.",
+          pausedSub: "Manual pause",
+          resetConfirm: "Do you really want to reset the duel?",
+          testing: "Audio test",
+          startSpeech30: "Take your places, the duel begins in 30 seconds.",
+          resumeSpeech20: "The duel begins in 20 seconds.",
+          endPeriodSpeech: "End of period, 2 minutes rest.",
+          finalSpeech: "Time elapsed, duel complete. Count your points. If tied, prepare for 3 minutes of overtime.",
+          overtimeStartSpeech: "3 minutes of overtime.",
+          overtimeEndSpeech: "Overtime complete."
         }
-      );
-      return;
-    }
+      };
 
-    if (modeToResume === "break") {
-      setPhase(t("breakTitle"));
-      setSub(t("breakSub", state.activePeriod));
-      setStatus(t("breakStatus"), t("breakDetail", state.activePeriod), true);
-      updatePeriodBoxes();
+      const els = {
+        app: document.getElementById("app"),
+        subtitleText: document.getElementById("subtitleText"),
+        audioBadge: document.getElementById("audioBadge"),
+        statusLabel: document.getElementById("statusLabel"),
+        statusDetail: document.getElementById("statusDetail"),
+        modeBadge: document.getElementById("modeBadge"),
+        signalDot: document.getElementById("signalDot"),
+        phaseLabel: document.getElementById("phaseLabel"),
+        timerDisplay: document.getElementById("timerDisplay"),
+        subDisplay: document.getElementById("subDisplay"),
+        timerCard: document.getElementById("timerCard"),
+        overlay: document.getElementById("overlay"),
+        overlayKicker: document.getElementById("overlayKicker"),
+        overlayTitle: document.getElementById("overlayTitle"),
+        overlaySub: document.getElementById("overlaySub"),
 
-      startTimer(
-        remaining,
-        "break",
-        async () => {
-          await startLeadCountdown(CONFIG.resumeLeadSeconds, state.activePeriod + 1, false);
-        },
-        (remainingSec) => {
-          renderTime(remainingSec);
-          const sec = Math.ceil(remainingSec);
-          if (sec > CONFIG.resumeLeadSeconds) {
-            setSub(`${formatTime(sec)} de repos restant`);
+        periodsTitle: document.getElementById("periodsTitle"),
+        legendTitle: document.getElementById("legendTitle"),
+        infoTitle: document.getElementById("infoTitle"),
+        legend1: document.getElementById("legend1"),
+        legend2: document.getElementById("legend2"),
+        legend3: document.getElementById("legend3"),
+        info1: document.getElementById("info1"),
+        info2: document.getElementById("info2"),
+        info3: document.getElementById("info3"),
+        info4: document.getElementById("info4"),
+        footerText: document.getElementById("footerText"),
+
+        frBtn: document.getElementById("frBtn"),
+        enBtn: document.getElementById("enBtn"),
+        ipadBtn: document.getElementById("ipadBtn"),
+
+        testBtn: document.getElementById("testBtn"),
+        startBtn: document.getElementById("startBtn"),
+        pauseBtn: document.getElementById("pauseBtn"),
+        resumeBtn: document.getElementById("resumeBtn"),
+        otBtn: document.getElementById("otBtn"),
+        fsBtn: document.getElementById("fsBtn"),
+        resetBtn: document.getElementById("resetBtn"),
+
+        p1: document.getElementById("p1"),
+        p2: document.getElementById("p2"),
+        p3: document.getElementById("p3"),
+        p4: document.getElementById("p4"),
+        p1t: document.getElementById("p1t"),
+        p2t: document.getElementById("p2t"),
+        p3t: document.getElementById("p3t"),
+        p4t: document.getElementById("p4t")
+      };
+
+      const state = {
+        lang: "fr",
+        mode: "idle",
+        activePeriod: 0,
+        remaining: CONFIG.periodSeconds,
+        running: false,
+        pausedFromMode: null,
+        timerEndAt: 0,
+        intervalId: null,
+        audioCtx: null,
+        ipadMode: false,
+        overlayTimeout: null,
+        speechEnabled: true,
+        selectedVoice: null,
+        spokenMarks: new Set()
+      };
+
+      function t(key, ...args) {
+        const value = TEXT[state.lang][key];
+        return typeof value === "function" ? value(...args) : value;
+      }
+
+      function setStatus(label, detail, live = false) {
+        els.statusLabel.textContent = label;
+        els.statusDetail.textContent = detail;
+        els.signalDot.style.background = live ? "var(--gold)" : "#64748b";
+        els.signalDot.style.boxShadow = live
+          ? "0 0 0 10px rgba(212,175,55,.12), 0 0 28px rgba(212,175,55,.24)"
+          : "none";
+      }
+
+      function setPhase(text) {
+        els.phaseLabel.textContent = text;
+      }
+
+      function setSub(text) {
+        els.subDisplay.textContent = text;
+      }
+
+      function formatTime(totalSeconds) {
+        const s = Math.max(0, Math.ceil(totalSeconds));
+        const m = Math.floor(s / 60);
+        const sec = s % 60;
+        return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+      }
+
+      function renderTime(seconds) {
+        els.timerDisplay.textContent = formatTime(seconds);
+      }
+
+      function flashTimer() {
+        els.timerCard.classList.remove("flash");
+        void els.timerCard.offsetWidth;
+        els.timerCard.classList.add("flash");
+      }
+
+      function wait(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+
+      function stopInterval() {
+        if (state.intervalId) {
+          clearInterval(state.intervalId);
+          state.intervalId = null;
+        }
+      }
+
+      function clearOverlayTimeout() {
+        if (state.overlayTimeout) {
+          clearTimeout(state.overlayTimeout);
+          state.overlayTimeout = null;
+        }
+      }
+
+      function showOverlay(title, sub, duration = 1200, style = "normal") {
+        clearOverlayTimeout();
+        els.overlayKicker.textContent = t("overlayOfficial");
+        els.overlayTitle.textContent = title;
+        els.overlaySub.textContent = sub;
+        els.overlay.classList.remove("pause-style", "final-style");
+        if (style === "pause") els.overlay.classList.add("pause-style");
+        if (style === "final") els.overlay.classList.add("final-style");
+        els.overlay.classList.add("show");
+
+        return new Promise(resolve => {
+          state.overlayTimeout = setTimeout(() => {
+            els.overlay.classList.remove("show", "pause-style", "final-style");
+            state.overlayTimeout = null;
+            resolve();
+          }, duration);
+        });
+      }
+
+      function updateButtons() {
+        const active = ["intro", "countdown", "period", "break", "overtime"].includes(state.mode);
+        const paused = state.mode === "paused";
+        const finished = state.mode === "finished";
+
+        els.startBtn.disabled = active || paused;
+        els.pauseBtn.disabled = !(active && state.running);
+        els.resumeBtn.disabled = !paused;
+        els.otBtn.disabled = !(finished || state.mode === "idle");
+      }
+
+      function setMode(mode) {
+        state.mode = mode;
+        updateButtons();
+      }
+
+      function updatePeriodBoxes() {
+        const boxes = [
+          [els.p1, els.p1t, 1],
+          [els.p2, els.p2t, 2],
+          [els.p3, els.p3t, 3],
+          [els.p4, els.p4t, 4]
+        ];
+
+        for (const [box, label, n] of boxes) {
+          box.classList.remove("pending", "active", "done");
+
+          if (state.mode === "period" && state.activePeriod === n) {
+            box.classList.add("active");
+            label.textContent = t("active");
+          } else if (state.activePeriod > n || state.mode === "overtime" || state.mode === "finished") {
+            box.classList.add("done");
+            label.textContent = t("done");
           } else {
-            setSub(`${formatTime(sec)} avant la reprise`);
+            box.classList.add("pending");
+            label.textContent = t("pending");
           }
         }
-      );
-      return;
-    }
 
-    if (modeToResume === "countdown") {
-      // Reprise simple : on relance un lead countdown adapté au temps restant.
-      const targetPeriod = state.activePeriod || 1;
-      const firstStart = targetPeriod === 1 && state.activePeriod === 1 && remaining > CONFIG.resumeLeadSeconds;
-      startLeadCountdown(Math.max(1, Math.ceil(remaining)), targetPeriod, firstStart);
-      return;
-    }
-
-    if (modeToResume === "overtime") {
-      setPhase(t("overtimeTitle"));
-      setSub(t("overtimeSub"));
-      setStatus(t("overtimeStatus"), t("overtimeDetail"), true);
-      updatePeriodBoxes();
-
-      startTimer(
-        remaining,
-        "overtime",
-        async () => {
-          const done = await playFinalBuzzer();
-          els.audioBadge.textContent = done ? t("audioOk") : t("audioFail");
-          setMode("finished");
-          setPhase(t("overtimeDoneTitle"));
-          setSub(t("overtimeDoneSub"));
-          setStatus(t("finishStatus"), t("finishDetail"), false);
-          await speak(t("overtimeEndSpeech"), true, 1.0);
-          await showOverlay(t("overtimeDoneTitle"), t("overtimeEndSpeech"), 1800, "final");
-        },
-        (remainingSec) => {
-          renderTime(remainingSec);
+        if (state.mode === "idle") {
+          boxes.forEach(([box, label]) => {
+            box.classList.remove("active", "done");
+            box.classList.add("pending");
+            label.textContent = t("pending");
+          });
         }
-      );
-    }
-  }
 
-  async function toggleFullscreen() {
-    try {
-      if (!document.fullscreenElement) {
-        if (document.documentElement.requestFullscreen) {
-          await document.documentElement.requestFullscreen();
+        if (state.mode === "break" || state.mode === "countdown") {
+          const next = state.mode === "break" ? state.activePeriod + 1 : state.activePeriod;
+          boxes.forEach(([box, label, n]) => {
+            if (n < next) {
+              box.classList.remove("pending", "active");
+              box.classList.add("done");
+              label.textContent = t("done");
+            } else if (n === next && state.mode !== "idle") {
+              box.classList.remove("pending", "done");
+              box.classList.add("active");
+              label.textContent = t("pending");
+            }
+          });
         }
-      } else if (document.exitFullscreen) {
-        await document.exitFullscreen();
       }
-    } catch (e) {}
-  }
 
-  function toggleIpadMode() {
-    state.ipadMode = !state.ipadMode;
-    els.app.classList.toggle("ipad-mode", state.ipadMode);
-    els.ipadBtn.classList.toggle("active", state.ipadMode);
-    els.modeBadge.textContent = state.ipadMode ? t("modeIpad") : t("modeStandard");
-  }
+      function applyLanguageUI() {
+        els.subtitleText.textContent = t("subtitle");
+        els.periodsTitle.textContent = t("periods");
+        els.legendTitle.textContent = t("state");
+        els.infoTitle.textContent = t("infos");
+        els.legend1.textContent = t("legend1");
+        els.legend2.textContent = t("legend2");
+        els.legend3.textContent = t("legend3");
+        els.info1.textContent = t("info1");
+        els.info2.textContent = t("info2");
+        els.info3.textContent = t("info3");
+        els.info4.textContent = t("info4");
+        els.footerText.textContent = t("footer");
 
-  els.testBtn.addEventListener("click", async () => {
-    await testSound();
-  });
+        els.testBtn.textContent = t("test");
+        els.startBtn.textContent = t("start");
+        els.pauseBtn.textContent = t("pause");
+        els.resumeBtn.textContent = t("resume");
+        els.otBtn.textContent = t("overtime");
+        els.fsBtn.textContent = t("fullscreen");
+        els.resetBtn.textContent = t("reset");
 
-  els.startBtn.addEventListener("click", async () => {
-    await runIntro();
-  });
+        els.modeBadge.textContent = state.ipadMode ? t("modeIpad") : t("modeStandard");
 
-  els.pauseBtn.addEventListener("click", () => {
-    pauseFlow();
-  });
+        els.frBtn.classList.toggle("active", state.lang === "fr");
+        els.enBtn.classList.toggle("active", state.lang === "en");
 
-  els.resumeBtn.addEventListener("click", () => {
-    resumeFlow();
-  });
+        initVoices();
 
-  els.otBtn.addEventListener("click", async () => {
-    await startOvertime();
-  });
+        if (state.mode === "idle") {
+          setPhase(t("waiting"));
+          setSub(t("notStarted"));
+          setStatus(t("ready"), t("readyDetail"), false);
+        }
 
-  els.fsBtn.addEventListener("click", async () => {
-    await toggleFullscreen();
-  });
+        updatePeriodBoxes();
+      }
 
-  els.resetBtn.addEventListener("click", () => {
-    fullReset(false);
-  });
+      function resetDisplay() {
+        state.activePeriod = 0;
+        state.remaining = CONFIG.periodSeconds;
+        state.spokenMarks = new Set();
+        setMode("idle");
+        renderTime(CONFIG.periodSeconds);
+        setPhase(t("waiting"));
+        setSub(t("notStarted"));
+        setStatus(t("ready"), t("readyDetail"), false);
+        els.audioBadge.textContent = t("audioUntested");
+        updatePeriodBoxes();
+      }
 
-  els.frBtn.addEventListener("click", () => {
-    state.lang = "fr";
-    applyLanguageUI();
-  });
+      function fullReset(force = false) {
+        if (!force) {
+          const ok = confirm(t("resetConfirm"));
+          if (!ok) return;
+        }
+        stopInterval();
+        stopSpeech();
+        clearOverlayTimeout();
+        els.overlay.classList.remove("show", "pause-style", "final-style");
+        state.running = false;
+        state.pausedFromMode = null;
+        resetDisplay();
+      }
 
-  els.enBtn.addEventListener("click", () => {
-    state.lang = "en";
-    applyLanguageUI();
-  });
+      function initAudio() {
+        if (state.audioCtx) return true;
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return false;
+        try {
+          state.audioCtx = new AC();
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
 
-  els.ipadBtn.addEventListener("click", () => {
-    toggleIpadMode();
-  });
+      function initVoices() {
+        if (!("speechSynthesis" in window)) return;
+        const voices = speechSynthesis.getVoices ? speechSynthesis.getVoices() : [];
+        if (!voices.length) return;
 
-  document.addEventListener("visibilitychange", async () => {
-    if (document.visibilityState === "visible" && state.audioCtx && state.audioCtx.state === "suspended") {
-      try { await state.audioCtx.resume(); } catch (e) {}
-    }
-  });
+        const preferred = state.lang === "fr"
+          ? voices.find(v => /fr/i.test(v.lang) && /Thomas|Amelie|Audrey|Marie|Pauline|Siri/i.test(v.name))
+            || voices.find(v => /fr/i.test(v.lang))
+            || voices[0]
+          : voices.find(v => /en/i.test(v.lang) && /Samantha|Daniel|Karen|Alex|Siri/i.test(v.name))
+            || voices.find(v => /en/i.test(v.lang))
+            || voices[0];
 
-  if ("speechSynthesis" in window) {
-    initVoices();
-    window.speechSynthesis.onvoiceschanged = initVoices;
-  }
+        state.selectedVoice = preferred || null;
+      }
 
-  resetDisplay();
-  applyLanguageUI();
-  updateButtons();
-})();
-</script>
+      function stopSpeech() {
+        try {
+          if ("speechSynthesis" in window) speechSynthesis.cancel();
+        } catch (e) {}
+      }
+
+      function speak(text, priority = false, rate = 1.02, pitch = 1) {
+        return new Promise(resolve => {
+          if (!state.speechEnabled || !("speechSynthesis" in window) || !text) {
+            resolve(false);
+            return;
+          }
+
+          try {
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.voice = state.selectedVoice || null;
+            utter.lang = state.selectedVoice?.lang || (state.lang === "fr" ? "fr-FR" : "en-US");
+            utter.rate = rate;
+            utter.pitch = pitch;
+            utter.volume = 1;
+
+            utter.onend = () => resolve(true);
+            utter.onerror = () => resolve(false);
+
+            if (priority) speechSynthesis.cancel();
+            speechSynthesis.speak(utter);
+          } catch (e) {
+            resolve(false);
+          }
+        });
+      }
+
+      async function unlockAudioAndVoice() {
+        const ok = initAudio();
+        initVoices();
+
+        try {
+          if (ok && state.audioCtx.state === "suspended") {
+            await state.audioCtx.resume();
+          }
+          if ("speechSynthesis" in window) {
+            speechSynthesis.cancel();
+          }
+          els.audioBadge.textContent = ok ? t("audioOk") : t("audioFail");
+          return ok;
+        } catch (e) {
+          els.audioBadge.textContent = t("audioFail");
+          return false;
+        }
+      }
+
+      function playTone(freq = 880, duration = 0.18, gainValue = 0.35, type = "sine") {
+        return new Promise(resolve => {
+          if (!state.audioCtx) {
+            resolve(false);
+            return;
+          }
+
+          try {
+            const ctx = state.audioCtx;
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            const filter = ctx.createBiquadFilter();
+
+            filter.type = "lowpass";
+            filter.frequency.setValueAtTime(3200, now);
+
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, now);
+
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(gainValue, now + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(now);
+            osc.stop(now + duration);
+
+            setTimeout(() => resolve(true), duration * 1000 + 30);
+          } catch (e) {
+            resolve(false);
+          }
+        });
+      }
+
+      async function playStartBuzzer() {
+        const a = await playTone(1050, 0.12, 0.42, "square");
+        await wait(35);
+        const b = await playTone(1300, 0.14, 0.46, "square");
+        await wait(35);
+        const c = await playTone(920, 0.38, 0.54, "sawtooth");
+        return a || b || c;
+      }
+
+      async function playEndBuzzer() {
+        const a = await playTone(820, 0.14, 0.42, "square");
+        await wait(50);
+        const b = await playTone(700, 0.14, 0.42, "square");
+        await wait(50);
+        const c = await playTone(560, 0.30, 0.50, "square");
+        return a || b || c;
+      }
+
+      async function playFinalBuzzer() {
+        const a = await playTone(1350, 0.12, 0.40, "square");
+        await wait(45);
+        const b = await playTone(1350, 0.12, 0.40, "square");
+        await wait(60);
+        const c = await playTone(760, 0.48, 0.58, "sawtooth");
+        return a || b || c;
+      }
+
+      async function testSound() {
+        await unlockAudioAndVoice();
+        await showOverlay(t("testing"), "3 · 2 · 1", 700);
+        await playTone(900, 0.16, 0.35, "sine");
+        await wait(70);
+        await playTone(1100, 0.18, 0.40, "square");
+        await wait(70);
+        await speak(state.lang === "fr" ? "Test de la voix." : "Voice test.", true, 1.02);
+        const played = await playFinalBuzzer();
+        els.audioBadge.textContent = played ? t("audioOk") : t("audioFail");
+      }
+
+      function startTimer(seconds, mode, onComplete, onTick) {
+        stopInterval();
+        state.running = true;
+        state.remaining = seconds;
+        state.timerEndAt = performance.now() + seconds * 1000;
+        setMode(mode);
+
+        state.intervalId = setInterval(() => {
+          const remainingMs = state.timerEndAt - performance.now();
+          const remainingSec = Math.max(0, remainingMs / 1000);
+          state.remaining = remainingSec;
+
+          if (onTick) onTick(remainingSec);
+
+          if (remainingSec <= 0.02) {
+            stopInterval();
+            state.running = false;
+            onComplete();
+          }
+        }, CONFIG.tickMs);
+      }
+
+      async function runIntro() {
+        await unlockAudioAndVoice();
+
+        state.activePeriod = 0;
+        state.running = false;
+        state.spokenMarks = new Set();
+
+        setMode("intro");
+        setPhase(t("introPhase"));
+        setSub(t("introSub"));
+        setStatus(t("introStatus"), t("introDetail"), true);
+        updatePeriodBoxes();
+
+        await showOverlay(t("overlayWelcomeTitle"), t("overlayWelcomeSub"), 1800);
+        await startLeadCountdown(CONFIG.firstLeadSeconds, 1, true);
+      }
+
+      async function startLeadCountdown(totalSeconds, periodNumber, firstStart = false) {
+        state.activePeriod = periodNumber;
+        state.spokenMarks = new Set();
+
+        setMode("countdown");
+        setPhase(firstStart ? t("introPhase") : t("breakTitle"));
+        setSub(firstStart ? "00:30 avant le départ" : "00:20 avant la reprise");
+        setStatus(
+          firstStart ? t("introStatus") : t("breakStatus"),
+          firstStart ? t("introDetail") : t("breakDetail", periodNumber - 1),
+          true
+        );
+        updatePeriodBoxes();
+
+        const openingSpeech = firstStart ? t("startSpeech30") : t("resumeSpeech20");
+        const openingOverlayTitle = firstStart ? t("overlayWelcomeTitle") : t("overlayBreakTitle");
+
+        await speak(openingSpeech, true, 1.0);
+        await showOverlay(openingOverlayTitle, openingSpeech, 1400, firstStart ? "normal" : "pause");
+
+        startTimer(
+          totalSeconds,
+          "countdown",
+          async () => {
+            const played = await playStartBuzzer();
+            els.audioBadge.textContent = played ? t("audioOk") : t("audioFail");
+            await speak(t("periodTitle", periodNumber), true, 1.05);
+            await showOverlay(t("periodTitle", periodNumber), t("periodSub", periodNumber), 900);
+            startPeriod(periodNumber);
+          },
+          (remainingSec) => {
+            const sec = Math.ceil(remainingSec);
+
+            if (sec > 10) {
+              renderTime(sec);
+              setSub(firstStart ? `${formatTime(sec)} avant le départ` : `${formatTime(sec)} avant la reprise`);
+            } else if (sec >= 1) {
+              els.timerDisplay.textContent = String(sec);
+              setSub(firstStart ? "Décompte officiel" : "Reprise imminente");
+              flashTimer();
+
+              if (!state.spokenMarks.has(`n${sec}`)) {
+                state.spokenMarks.add(`n${sec}`);
+                speak(String(sec), true, 1.06);
+                showOverlay(String(sec), firstStart ? "Avant le lancement" : "Reprise du jeu", 550, firstStart ? "normal" : "pause");
+              }
+            }
+          }
+        );
+      }
+
+      function startPeriod(periodNumber) {
+        state.activePeriod = periodNumber;
+        setPhase(t("periodTitle", periodNumber));
+        setSub(t("periodSub", periodNumber));
+        setStatus(t("periodStatus", periodNumber), t("periodDetail"), true);
+        updatePeriodBoxes();
+
+        startTimer(
+          CONFIG.periodSeconds,
+          "period",
+          async () => {
+            await onPeriodEnd(periodNumber);
+          },
+          (remainingSec) => {
+            renderTime(remainingSec);
+          }
+        );
+      }
+
+      async function onPeriodEnd(periodNumber) {
+        const played = await playEndBuzzer();
+        els.audioBadge.textContent = played ? t("audioOk") : t("audioFail");
+
+        await speak(t("endPeriodSpeech"), true, 1.0);
+        await showOverlay(
+          state.lang === "fr" ? `Fin période ${periodNumber}` : `End period ${periodNumber}`,
+          t("endPeriodSpeech"),
+          1500,
+          "pause"
+        );
+
+        if (periodNumber < CONFIG.totalPeriods) {
+          await startBreak(periodNumber);
+        } else {
+          await finishMatch();
+        }
+      }
+
+      async function startBreak(completedPeriod) {
+        state.activePeriod = completedPeriod;
+        state.spokenMarks = new Set();
+
+        setPhase(t("breakTitle"));
+        setSub(t("breakSub", completedPeriod));
+        setStatus(t("breakStatus"), t("breakDetail", completedPeriod), true);
+        updatePeriodBoxes();
+
+        startTimer(
+          CONFIG.breakSeconds,
+          "break",
+          async () => {
+            await startLeadCountdown(CONFIG.resumeLeadSeconds, completedPeriod + 1, false);
+          },
+          (remainingSec) => {
+            const sec = Math.ceil(remainingSec);
+            renderTime(remainingSec);
+
+            if (sec > CONFIG.resumeLeadSeconds) {
+              setSub(`${formatTime(sec)} de repos restant`);
+            } else {
+              setSub(`${formatTime(sec)} avant la reprise`);
+            }
+          }
+        );
+      }
+
+      async function finishMatch() {
+        const played = await playFinalBuzzer();
+        els.audioBadge.textContent = played ? t("audioOk") : t("audioFail");
+
+        setMode("finished");
+        renderTime(0);
+        setPhase(t("finishTitle"));
+        setSub(t("finishSub"));
+        setStatus(t("finishStatus"), t("finishDetail"), false);
+        updatePeriodBoxes();
+
+        await speak(t("finalSpeech"), true, 1.0);
+        await showOverlay(t("overlayFinalTitle"), t("finalSpeech"), 2600, "final");
+      }
+
+      async function startOvertime() {
+        await unlockAudioAndVoice();
+
+        state.activePeriod = 4;
+        setPhase(t("overtimeTitle"));
+        setSub(t("overtimeSub"));
+        setStatus(t("overtimeStatus"), t("overtimeDetail"), true);
+        updatePeriodBoxes();
+
+        await speak(t("overtimeStartSpeech"), true, 1.0);
+        await showOverlay(t("overtimeTitle"), t("overtimeStartSpeech"), 1500);
+
+        startTimer(
+          CONFIG.overtimeSeconds,
+          "overtime",
+          async () => {
+            const done = await playFinalBuzzer();
+            els.audioBadge.textContent = done ? t("audioOk") : t("audioFail");
+            setMode("finished");
+            setPhase(t("overtimeDoneTitle"));
+            setSub(t("overtimeDoneSub"));
+            setStatus(t("finishStatus"), t("finishDetail"), false);
+            await speak(t("overtimeEndSpeech"), true, 1.0);
+            await showOverlay(t("overtimeDoneTitle"), t("overtimeEndSpeech"), 1800, "final");
+          },
+          (remainingSec) => {
+            renderTime(remainingSec);
+          }
+        );
+      }
+
+      function pauseFlow() {
+        if (!state.running) return;
+        stopInterval();
+        stopSpeech();
+        state.running = false;
+        state.pausedFromMode = state.mode;
+        setMode("paused");
+        setStatus(t("pausedStatus"), t("pausedDetail"), false);
+        setSub(t("pausedSub"));
+      }
+
+      function resumeFlow() {
+        if (state.mode !== "paused" || !state.pausedFromMode) return;
+
+        const modeToResume = state.pausedFromMode;
+        const remaining = state.remaining;
+
+        if (modeToResume === "period") {
+          setPhase(t("periodTitle", state.activePeriod));
+          setSub(t("periodSub", state.activePeriod));
+          setStatus(t("periodStatus", state.activePeriod), t("periodDetail"), true);
+          updatePeriodBoxes();
+
+          startTimer(
+            remaining,
+            "period",
+            async () => {
+              await onPeriodEnd(state.activePeriod);
+            },
+            (remainingSec) => {
+              renderTime(remainingSec);
+            }
+          );
+          return;
+        }
+
+        if (modeToResume === "break") {
+          setPhase(t("breakTitle"));
+          setSub(t("breakSub", state.activePeriod));
+          setStatus(t("breakStatus"), t("breakDetail", state.activePeriod), true);
+          updatePeriodBoxes();
+
+          startTimer(
+            remaining,
+            "break",
+            async () => {
+              await startLeadCountdown(CONFIG.resumeLeadSeconds, state.activePeriod + 1, false);
+            },
+            (remainingSec) => {
+              renderTime(remainingSec);
+              const sec = Math.ceil(remainingSec);
+              if (sec > CONFIG.resumeLeadSeconds) {
+                setSub(`${formatTime(sec)} de repos restant`);
+              } else {
+                setSub(`${formatTime(sec)} avant la reprise`);
+              }
+            }
+          );
+          return;
+        }
+
+        if (modeToResume === "countdown") {
+          const targetPeriod = state.activePeriod || 1;
+          const firstStart = targetPeriod === 1 && remaining > CONFIG.resumeLeadSeconds;
+          startLeadCountdown(Math.max(1, Math.ceil(remaining)), targetPeriod, firstStart);
+          return;
+        }
+
+        if (modeToResume === "overtime") {
+          setPhase(t("overtimeTitle"));
+          setSub(t("overtimeSub"));
+          setStatus(t("overtimeStatus"), t("overtimeDetail"), true);
+          updatePeriodBoxes();
+
+          startTimer(
+            remaining,
+            "overtime",
+            async () => {
+              const done = await playFinalBuzzer();
+              els.audioBadge.textContent = done ? t("audioOk") : t("audioFail");
+              setMode("finished");
+              setPhase(t("overtimeDoneTitle"));
+              setSub(t("overtimeDoneSub"));
+              setStatus(t("finishStatus"), t("finishDetail"), false);
+              await speak(t("overtimeEndSpeech"), true, 1.0);
+              await showOverlay(t("overtimeDoneTitle"), t("overtimeEndSpeech"), 1800, "final");
+            },
+            (remainingSec) => {
+              renderTime(remainingSec);
+            }
+          );
+        }
+      }
+
+      async function toggleFullscreen() {
+        try {
+          if (!document.fullscreenElement) {
+            if (document.documentElement.requestFullscreen) {
+              await document.documentElement.requestFullscreen();
+            }
+          } else if (document.exitFullscreen) {
+            await document.exitFullscreen();
+          }
+        } catch (e) {}
+      }
+
+      function toggleIpadMode() {
+        state.ipadMode = !state.ipadMode;
+        els.app.classList.toggle("ipad-mode", state.ipadMode);
+        els.ipadBtn.classList.toggle("active", state.ipadMode);
+        els.modeBadge.textContent = state.ipadMode ? t("modeIpad") : t("modeStandard");
+      }
+
+      els.testBtn.addEventListener("click", async () => {
+        await testSound();
+      });
+
+      els.startBtn.addEventListener("click", async () => {
+        await runIntro();
+      });
+
+      els.pauseBtn.addEventListener("click", () => {
+        pauseFlow();
+      });
+
+      els.resumeBtn.addEventListener("click", () => {
+        resumeFlow();
+      });
+
+      els.otBtn.addEventListener("click", async () => {
+        await startOvertime();
+      });
+
+      els.fsBtn.addEventListener("click", async () => {
+        await toggleFullscreen();
+      });
+
+      els.resetBtn.addEventListener("click", () => {
+        fullReset(false);
+      });
+
+      els.frBtn.addEventListener("click", () => {
+        state.lang = "fr";
+        applyLanguageUI();
+      });
+
+      els.enBtn.addEventListener("click", () => {
+        state.lang = "en";
+        applyLanguageUI();
+      });
+
+      els.ipadBtn.addEventListener("click", () => {
+        toggleIpadMode();
+      });
+
+      document.addEventListener("visibilitychange", async () => {
+        if (document.visibilityState === "visible" && state.audioCtx && state.audioCtx.state === "suspended") {
+          try { await state.audioCtx.resume(); } catch (e) {}
+        }
+      });
+
+      if ("speechSynthesis" in window) {
+        initVoices();
+        window.speechSynthesis.onvoiceschanged = initVoices;
+      }
+
+      resetDisplay();
+      applyLanguageUI();
+      updateButtons();
+    })();
+  </script>
+</body>
+</html>
